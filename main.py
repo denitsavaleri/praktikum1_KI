@@ -1,6 +1,7 @@
 import random
 from typing import List
 import tsplib95
+from termcolor import colored
 
 # define own typefor the test instance from tsplib
 TSP_INSTANCE =  tsplib95.models.Problem
@@ -156,7 +157,7 @@ def recombination(individual1: Individual, individual2: Individual, cross_point:
 def update_population_with_new_children(population, children):
     population.extend(children)
 
-def plus_selection(mu: int, llambda: int, population: List[Individual], mutation_probability) -> List[Individual]:
+def plus_selection(mu: int, llambda: int, population: List[Individual], mutation_probability,cities, tsp_instance) -> List[Individual]:
     """
     1. choose best mu parents
     2. create lambda children from the mu best parents
@@ -167,15 +168,40 @@ def plus_selection(mu: int, llambda: int, population: List[Individual], mutation
     :param population: old population
     :return: new population with mu indivduals
     """
-    # if <0.5 -> mutation, if >0.5 -> recombination
+
 
     # 1. choose best mu parents
-    best_parents = []
-    for i in range(len(population)-1):
-        if(population[i].fitness>population[i+1].fitness):
-            best_parents.append(population[i])
+    best_parents = sorted(population,key=lambda individuum: individuum.fitness)
+    # fitness = distance --> low fitness better
+    best_parents = best_parents[:mu]
+
+    #show the best parents choice
+    print("best_parents")
     for parent in best_parents:
         print(parent.path, parent.fitness)
+    print()
+
+    # 2. create lambda children from the mu best parents
+    print("New Offspring")
+    new_offspring = []
+    for i in range(llambda):
+        random_number = random.random()
+        # if < 0.5 -> mutation, if >0.5 -> recombination
+        if random_number<0.5:
+            print ("Mutation")
+            mutated_ind = mutation(population[i],mutation_probability)
+            new_offspring.append(mutated_ind)
+        else:
+            print("Recombination" )
+            cross_point_random = random.randint(0, len(population))
+            recombinated_ind = recombination(population[i], population[random.randint(0,len(population)-1)],cross_point_random,tsp_instance,cities)
+            new_offspring.extend(recombinated_ind)
+
+    # 3. choose mu best individuals from parents + children
+    mu_lambda_together = best_parents + new_offspring
+    mu_best_individuals = sorted(mu_lambda_together,key=lambda individuum: individuum.fitness)
+    mu_best_individuals = mu_best_individuals[:mu]
+    return mu_best_individuals
 
 def print_population(population):
     print("\nPopulation: \nPATH	 FITNESS VALUE\n")
@@ -210,7 +236,9 @@ def main():
     print_population(population)
 
     print("Selektion")
-    plus_selection(0,0,population,0.2)
-
+    # best 3 parents and 6 new children
+    plus_selection(3,6,population,0.2, cities, tsp_test_instance)
+    # for i in range(len(res)):
+    #     print(res[i].path, res[i].fitness)
 if __name__ == "__main__":
     main()
