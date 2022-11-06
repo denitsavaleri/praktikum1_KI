@@ -1,5 +1,3 @@
-import codecs
-import csv
 import random
 from typing import List
 import tsplib95
@@ -158,21 +156,30 @@ def recombination(individual1: Individual, individual2: Individual, cross_point:
 def update_population_with_new_children(population, children):
     population.extend(children)
 
-
-
-def plus_selection(mu: int, llambda: int, population: List[Individual]) -> List[Individual]:
+def plus_selection(mu: int, llambda: int, population: List[Individual], mutation_probability) -> List[Individual]:
     """
+    1. choose best mu parents
+    2. create lambda children from the mu best parents
+    3. choose mu best individuals from parents + children
 
     :param mu: number of individuals for the new population
     :param llambda: number of children to create of the old population
     :param population: old population
     :return: new population with mu indivduals
     """
-    pass
+    # if <0.5 -> mutation, if >0.5 -> recombination
+
+    # 1. choose best mu parents
+    best_parents = []
+    for i in range(len(population)-1):
+        if(population[i].fitness>population[i+1].fitness):
+            best_parents.append(population[i])
+    for parent in best_parents:
+        print(parent.path, parent.fitness)
 
 def print_population(population):
-    print("\nInitial population: \nPATH	 FITNESS VALUE\n")
-    for i in range(POPULATION_SIZE):
+    print("\nPopulation: \nPATH	 FITNESS VALUE\n")
+    for i in range(len(population)):
         print(population[i].path, population[i].fitness)
     print()
 
@@ -201,6 +208,9 @@ def main():
     print("Population after recombination")
     # still not 12
     print_population(population)
+
+    print("Selektion")
+    plus_selection(0,0,population,0.2)
 
 if __name__ == "__main__":
     main()
