@@ -159,6 +159,7 @@ def update_population_with_new_children(population, children):
     population.extend(children)
 
 
+
 def plus_selection(mu: int, llambda: int, population: List[Individual]) -> List[Individual]:
     """
 
@@ -194,9 +195,11 @@ def main():
     mutation(population[0], 0.2)
 
     # recombination
-    offspring = recombination(population[1],population[2], 3, tsp_test_instance)
+    offspring = recombination(population[1],population[2], 3, tsp_test_instance,cities)
     # update the population with the new children
     update_population_with_new_children(population,offspring)
+    print("Population after recombination")
+    # still not 12
     print_population(population)
 
 if __name__ == "__main__":
