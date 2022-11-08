@@ -214,7 +214,8 @@ def print_population(population):
 
 def main(n_iteration,best_parents, n_children, mutation_probability):
     # tsp file load
-    file = "C:/Daten/Studium Info/Informatik TH Köln/5.Sem/KI/P/tsp-Dateien/a280.tsp"
+    file = "a280.tsp"
+    # 2. Testinstanz hinzufügen TODO()
     read_tsp_file(file)
     #test if tsp can be read
     cities = get_cities_from_instance()
@@ -256,5 +257,5 @@ if __name__ == "__main__":
     # more generations -> better fitness
     # main(10,3,4,0.2)
     # more best parents ->
-    main(10, 3, 4, 0.2)
+    main(100, 3, 4, 0.2)
 
