@@ -11,7 +11,6 @@ POPULATION_SIZE = 10
 def read_tsp_file(file: str):
     """
     read tsp test instance from tsplib
-    return: problem class which has all nodes(=cities) and weights(=distances)
     """
     global tsp_instance
     tsp_instance = tsplib95.load(file)
@@ -200,7 +199,7 @@ def plus_selection(mu: int, llambda: int, population: List[Individual], mutation
 
     # 3. choose mu best individuals from parents + children
     mu_lambda_together = best_parents + new_offspring
-    # sort ascending
+    # sort ascending based on the fitness. 
     mu_best_individuals = sorted(mu_lambda_together,key=lambda individuum: individuum.fitness)
     # choose the best mu - individuals
     mu_best_individuals = mu_best_individuals[:mu]
