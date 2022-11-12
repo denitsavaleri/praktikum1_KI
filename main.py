@@ -22,6 +22,8 @@ class Individual():
         self.fitness = fitness
         # path = list of the cities which have been/can be visited
         self.path = path
+    def __eq__(self,other):
+        return self.path == other.path
 
 def get_cities_from_instance():
     return list(tsp_instance.get_nodes())
@@ -199,8 +201,12 @@ def plus_selection(mu: int, llambda: int, population: List[Individual], mutation
 
     # 3. choose mu best individuals from parents + children
     mu_lambda_together = best_parents + new_offspring
+    filter_duplicates = []
+    for individuum in mu_lambda_together:
+        if(individuum not in filter_duplicates):
+            filter_duplicates.append(individuum)
     # sort ascending based on the fitness. 
-    mu_best_individuals = sorted(mu_lambda_together,key=lambda individuum: individuum.fitness)
+    mu_best_individuals = sorted(filter_duplicates,key=lambda individuum: individuum.fitness)
     # choose the best mu - individuals
     mu_best_individuals = mu_best_individuals[:mu]
     return mu_best_individuals
@@ -213,14 +219,16 @@ def print_population(population):
 
 def main(n_iteration,best_parents, n_children, mutation_probability):
     # tsp file load
-    file = "a280.tsp"
+    file_a280 = "a280.tsp"
     # 2. Testinstanz hinzufügen TODO()
-    read_tsp_file(file)
-    #test if tsp can be read
+    file_berlin52 = "berlin52.tsp"
+    # read_tsp_file(file_a280)
+    read_tsp_file(file_berlin52)
+    # test if tsp can be read
     cities = get_cities_from_instance()
     distance_between_city1_city2 = get_distance_from_instance(cities[0], cities[1])
-    # print("Cities: ",cities)
-    # print("Distance between first and second city: ", distance_between_city1_city2)
+    print("Cities: ",cities)
+    print("Distance between first and second city: ", distance_between_city1_city2)
     #
     # create population
     population = create_initial_population(cities)
