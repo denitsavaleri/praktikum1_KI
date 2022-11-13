@@ -15,6 +15,7 @@ a280_FILEPATH = ['a280.tsp', 'a280.opt.tour']
 ACTIV_PROBLEM_FILEPATH = []
 ALWAYS_START_AT_1 = False
 WITH_GREEDY = False
+PLOT_EVERY_X_GENERATIONS = 10
 
 
 def read_tsp_file(file: str):
@@ -93,7 +94,7 @@ def evolutionary_algortihm(population: List[Individual], n_iterations: int, citi
         population = plus_selection(mu, llambda, population, mutation_probability, cities)
         print()
         print(f"[Fitness of best individuum for genration {i+1}: {population[0].fitness}]")
-        if ((i + 1) % 10) == 0 or i == 0:
+        if ((i + 1) % PLOT_EVERY_X_GENERATIONS) == 0 or i == 0:
             plot_tsp(population[0].path, 'Best from generation: ' + str(i + 1), population[0].fitness)
 
 
