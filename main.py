@@ -7,12 +7,14 @@ from termcolor import colored
 tsp_instance: Optional[tsplib95.models.Problem] = None
 
 # population size
-POPULATION_SIZE = 1000
+POPULATION_SIZE = 2000
 
-PROBLEM_1_FILEPATH = ['berlin52.tsp', 'berlin52.opt.tour']
-PROBLEM_2_FILEPATH = ['a280.tsp', 'a280.opt.tour']
+ch130_FILEPATH = ['ch130.tsp', 'ch130.opt.tour']
+berlin52_FILEPATH = ['berlin52.tsp', 'berlin52.opt.tour']
+a280_FILEPATH = ['a280.tsp', 'a280.opt.tour']
 ACTIV_PROBLEM_FILEPATH = []
 ALWAYS_START_AT_1 = False
+WITH_GREEDY = False
 
 
 def read_tsp_file(file: str):
@@ -89,25 +91,23 @@ def evolutionary_algortihm(population: List[Individual], n_iterations: int, citi
         print()
         print("Generation ", i + 1)
         population = plus_selection(mu, llambda, population, mutation_probability, cities)
-        print(f"Fitness of best individuum: {population[0].fitness}")
+        print()
+        print(f"[Fitness of best individuum for genration {i+1}: {population[0].fitness}]")
         if ((i + 1) % 10) == 0 or i == 0:
-            plot_tsp(population[0].path, i + 1, population[0].fitness)
+            plot_tsp(population[0].path, 'Best from generation: ' + str(i + 1), population[0].fitness)
 
 
 def mutation(individual: Individual, mutation_probability: float) -> Individual:
     """
-
     :param individual: individual that will mutate
     :return: individual that has mutated
     """
     path = individual.path.copy()
-    # print("Path to mutate: ", path, "Fitness: ", individual.fitness)
-    temp = 0
-    # number between 0 and 1
+
     start = 0
     if ALWAYS_START_AT_1:
         start = 1
-    for i in range(start, len(path) - 1):
+    for i in range(start, len(path)):
         random_number = random.random()
         if random_number < mutation_probability:
             # the city with a random number < mutation_probability is being replaced
@@ -121,25 +121,14 @@ def mutation(individual: Individual, mutation_probability: float) -> Individual:
             index_new_city = path.index(new_city)
             path[i] = new_city
             path[index_new_city] = temp
-    # save the new path in the individual
-    # ändert sich der Fitness von alleine?
-    # print("Mutated path: ", path, "Fitness: ", individual.fitness)
+
     return Individual(get_fitness(path), path)
 
 
 def convert_to_valid_path(path_child: List[int], cities: List[int]):
     valid_path = []
     forgotten_cities = []
-    """
-    # all cities from the build child path but only once
-    for city in path_child:
-        if city not in valid_path:
-            valid_path.append(city)
-    # all cities that are missing in the path
-    for city in cities:
-        if city not in valid_path:
-            valid_path.append(city)
-    """
+
     for city in path_child:
         if city not in valid_path:
             valid_path.append(city)
@@ -193,8 +182,32 @@ def crossover(individual1: Individual, individual2: Individual, crossovers: int,
     child1 = Individual(get_fitness(child1_path), child1_path)
     child2 = Individual(get_fitness(child2_path), child2_path)
 
-
     return [child1, child2]
+
+
+def greedy_algorithm(cities: List[int], start: int) -> Individual:
+    new_path = [start]
+    current_city = start
+    for i in range(len(cities) - 1):
+        closest_city = []
+
+        for city in cities:
+
+            distance = get_distance_from_instance(current_city, city)
+
+            if not closest_city:
+                if city not in new_path:
+                    closest_city.append(distance)
+                    closest_city.append(city)
+            elif closest_city[0] > distance:
+                if city not in new_path:
+                    closest_city[0] = distance
+                    closest_city[1] = city
+
+        new_path.append(closest_city[1])
+        current_city = closest_city[1]
+
+    return Individual(get_fitness(new_path), new_path)
 
 
 def recombination(individual1: Individual, individual2: Individual, cross_point: int, cities) -> List[Individual]:
@@ -236,7 +249,7 @@ def update_population_with_new_children(population, children):
     population.extend(children)
 
 
-def plus_selection(mu: int, llambda: int, population: List[Individual], mutation_probability, cities) -> List[
+def plus_selection(mu: int, llambda: int, population: List[Individual], mutation_probability, cities, crossovers = 6) -> List[
     Individual]:
     """
     1. choose best mu parents
@@ -265,49 +278,68 @@ def plus_selection(mu: int, llambda: int, population: List[Individual], mutation
     # show the best parents choice
     print("best_parents:")
     print_population(best_parents[:5])
-    print()
 
     new_parents = best_parents
 
     # 2. create lambda children from the mu best parents
-    # print("New Offspring")
+    print("New Offspring")
     new_offspring = []
-    while len(new_offspring) <= llambda:
+    first_mutation = False
+    first_recombination = False
+    while len(new_offspring) < llambda:
         random_number = random.random()
         # if < 0.5 -> mutation, if >0.5 -> recombination
         if random_number < 0.5:
-            # print("Mutation")
-            mutated_ind = mutation(best_parents[random.randint(0, len(best_parents) - 1)], mutation_probability)
+            parent = best_parents[random.randint(0, len(best_parents) - 1)]
+
+            if not first_mutation:
+                print()
+                print("First mutation, mutation probability: " + str(mutation_probability))
+                print("Path to mutate: ", parent.path, "Fitness: ", parent.fitness)
+
+            mutated_ind = mutation(parent, mutation_probability)
+
+            if not first_mutation:
+                print("Path to mutate: ", mutated_ind.path, "Fitness: ", mutated_ind.fitness)
+                first_mutation = True
+
             new_offspring.append(mutated_ind)
         else:
-            # print("Recombination")
-            """
-            cross_point_random = random.randint(0, len(population))
-            recombinated_ind = recombination(population[random.randint(0, len(population) - 1)],
-                                             population[random.randint(0, len(population) - 1)], cross_point_random,
-                                             cities)
-            new_offspring.extend(recombinated_ind)
-            """
             parent_1 = best_parents[random.randint(0, len(best_parents) - 1)]
             parent_2 = best_parents[random.randint(0, len(best_parents) - 1)]
+
+            if not first_recombination:
+                print()
+                print("First Recombination, crossover points: " + str(crossovers))
+                print("parent_1 path:", parent_1.path, "Fitness: ", parent_1.fitness)
+                print("parent_2 path: ", parent_2.path, "Fitness: ", parent_2.fitness)
+
             while parent_1.path == parent_2.path:
                 parent_1 = best_parents[random.randint(0, len(best_parents) - 1)]
 
             recombinated_ind = crossover(parent_1,
                                          parent_2,
-                                         6,
+                                         crossovers,
                                          cities)
+            if not first_recombination:
+                print("child1 path:", recombinated_ind[0].path, "Fitness: ", recombinated_ind[0].fitness)
+                print("child2 path: ", recombinated_ind[1].path, "Fitness: ", recombinated_ind[1].fitness)
+                first_recombination = True
 
             new_offspring.extend(recombinated_ind)
 
     # 3. choose mu best individuals from parents + children
     mu_lambda_together = new_offspring + best_parents
 
+    if WITH_GREEDY:
+        for i in range(10):
+            mu_lambda_together.append(greedy_algorithm(cities, random.choice(cities)))
+
     remove_same_path(mu_lambda_together)
     # sort ascending based on the fitness. 
     mu_best_individuals = sorted(mu_lambda_together, key=lambda individuum: individuum.fitness)
     # choose the best mu - individuals
-    # mu_best_individuals = mu_best_individuals[:mu]
+    mu_best_individuals = mu_best_individuals[:mu]
     return mu_best_individuals
 
 
@@ -330,7 +362,7 @@ def print_population(population):
     print()
 
 
-def plot_tsp(path: List[int], generation: int, fitness: int):
+def plot_tsp(path: List[int], caption: str, fitness: int):
     x_coords = []
     y_coords = []
     for city in path:
@@ -341,7 +373,7 @@ def plot_tsp(path: List[int], generation: int, fitness: int):
     plt.plot(x_coords, y_coords)
     plt.ylabel('y')
     plt.xlabel('x')
-    title = 'Best from generation: ' + str(generation) + ", fitness: " + str(fitness)
+    title = caption + ", fitness: " + str(fitness)
     plt.title(title)
     plt.show()
 
@@ -349,57 +381,41 @@ def plot_tsp(path: List[int], generation: int, fitness: int):
 def main(n_iteration, best_parents, n_children, mutation_probability):
     # tsp file load
     file = ACTIV_PROBLEM_FILEPATH[0]
-    # 2. Testinstanz hinzufügen TODO()
+    # 2. Testinstanz hinzufügen
     read_tsp_file(file)
     # test if tsp can be read
     cities = get_cities_from_instance()
     distance_between_city1_city2 = get_distance_from_instance(cities[0], cities[1])
-    # print("Cities: ",cities)
-    # print("Distance between first and second city: ", distance_between_city1_city2)
-    #
+
     # create population
     population = create_initial_population(cities)
     if ALWAYS_START_AT_1:
         for individual in population:
             individual.path[0] = 1
             individual.path = convert_to_valid_path(individual.path, cities)
-    # print("\n Initial Population: \nPATH	 FITNESS VALUE\n")
-    # print_population(population)
-    #
-    # # mutation
-    # mutation(population[0], 0.2)
-    #
-    # # recombination
-    # offspring = recombination(population[1],population[2], 3, tsp_test_instance,cities)
-    # # update the population with the new children
-    # update_population_with_new_children(population,offspring)
-    # print("Population after recombination")
-    # # still not 12
-    # print_population(population)
 
-    # print("Selektion")
-    # best 3 parents and 6 new children
-    # plus_selection(3,6,population,0.2, cities, tsp_test_instance)
-    # for i in range(len(res)):
-    #     print(res[i].path, res[i].fitness)
+    # welche fitness schafft ein einfacher greedy Algoritmus?
+    greed = greedy_algorithm(cities, 1)
+    print("greedy: " + str(greed.fitness))
+    plot_tsp(greed.path, "Greedy algorithm", greed.fitness)
 
     print("The Evolutionary Process beginns:")
-    # Welchen Einfl uss haben die Parameter auf die Ergebnisse?
+    # Welchen Einfluss haben die Parameter auf die Ergebnisse?
     # mit mehr generationen bekommen wir besseren fitness da wir immer die besten auswählen
     evolutionary_algortihm(population, n_iteration, cities, best_parents, n_children, mutation_probability)
     opt = tsplib95.load(ACTIV_PROBLEM_FILEPATH[1])
     print()
     print('optimal tour: ', opt.tours)
-    print('fitness of optimal tour: ', tsp_instance.trace_tours(opt.tours))
-    # print(get_fitness(opt.tours[0]))
+    print('fitness of optimal tour: ', tsp_instance.trace_tours(opt.tours)[0])
+    plot_tsp(opt.tours[0], "Optimal tour", tsp_instance.trace_tours(opt.tours)[0])
 
 
 if __name__ == "__main__":
     # immer mit den selben random Zahlen
-    # random.seed(41)
+    random.seed(41)
     # main(10,3,4,0.2)
     # more generations -> better fitness
     # main(10,3,4,0.2)
     # more best parents ->
-    ACTIV_PROBLEM_FILEPATH = PROBLEM_1_FILEPATH
-    main(100, 550, 2000, 0.3)
+    ACTIV_PROBLEM_FILEPATH = ch130_FILEPATH
+    main(100, 40, 200, 0.3)
