@@ -7,7 +7,7 @@ from termcolor import colored
 tsp_instance: Optional[tsplib95.models.Problem] = None
 
 # population size
-POPULATION_SIZE = 2000
+POPULATION_SIZE = 600
 
 ch130_FILEPATH = ['ch130.tsp', 'ch130.opt.tour']
 berlin52_FILEPATH = ['berlin52.tsp', 'berlin52.opt.tour']
@@ -15,7 +15,7 @@ a280_FILEPATH = ['a280.tsp', 'a280.opt.tour']
 ACTIV_PROBLEM_FILEPATH = []
 ALWAYS_START_AT_1 = False
 WITH_GREEDY = False
-PLOT_EVERY_X_GENERATIONS = 10
+PLOT_EVERY_X_GENERATIONS = 20
 
 
 def read_tsp_file(file: str):
@@ -211,41 +211,6 @@ def greedy_algorithm(cities: List[int], start: int) -> Individual:
     return Individual(get_fitness(new_path), new_path)
 
 
-def recombination(individual1: Individual, individual2: Individual, cross_point: int, cities) -> List[Individual]:
-    """
-
-    :param individual1: parent one
-    :param individual2:  parent two
-    :return: recombinated child
-    """
-
-    print("I1 path:", individual1.path)
-    print("I2 path: ", individual2.path)
-    # subset the paths in two with the crossover point
-    individual1_subpath_first_half = individual1.path[:cross_point]
-    individual1_subpath_second_half = individual1.path[cross_point:]
-    individual2_subpath_first_half = individual2.path[:cross_point]
-    individual2_subpath_second_half = individual2.path[cross_point:]
-
-    # build the children paths
-    path_child1 = individual1_subpath_first_half + individual2_subpath_second_half
-    path_child2 = individual2_subpath_first_half + individual1_subpath_second_half
-    # recombined paths should only contain each city once
-    path_child1 = convert_to_valid_path(path_child1, cities)
-    path_child2 = convert_to_valid_path(path_child2, cities)
-
-    fitness_child1 = get_fitness(path_child1)
-    fitness_child2 = get_fitness(path_child2)
-    # print the offspring :D
-    print("child1 path:", path_child1, "Fitness: ", fitness_child1)
-    print("child2 path: ", path_child2, "Fitness: ", fitness_child2)
-
-    child1 = Individual(fitness_child1, path_child1)
-    child2 = Individual(fitness_child2, path_child2)
-
-    return [child1, child2]
-
-
 def update_population_with_new_children(population, children):
     population.extend(children)
 
@@ -418,5 +383,5 @@ if __name__ == "__main__":
     # more generations -> better fitness
     # main(10,3,4,0.2)
     # more best parents ->
-    ACTIV_PROBLEM_FILEPATH = ch130_FILEPATH
-    main(100, 40, 200, 0.3)
+    ACTIV_PROBLEM_FILEPATH = berlin52_FILEPATH
+    main(500, 120, 600, 0.08)
