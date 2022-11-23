@@ -14,8 +14,9 @@ berlin52_FILEPATH = ['berlin52.tsp', 'berlin52.opt.tour']
 a280_FILEPATH = ['a280.tsp', 'a280.opt.tour']
 ACTIV_PROBLEM_FILEPATH = []
 ALWAYS_START_AT_1 = False
-WITH_GREEDY = False
+WITH_GREEDY = True
 PLOT_EVERY_X_GENERATIONS = 20
+BESTFINESS = []
 
 
 def read_tsp_file(file: str):
@@ -94,6 +95,7 @@ def evolutionary_algortihm(population: List[Individual], n_iterations: int, citi
         population = plus_selection(mu, llambda, population, mutation_probability, cities)
         print()
         print(f"[Fitness of best individuum for genration {i+1}: {population[0].fitness}]")
+        BESTFINESS.append(population[0].fitness)
         if ((i + 1) % PLOT_EVERY_X_GENERATIONS) == 0 or i == 0:
             plot_tsp(population[0].path, 'Best from generation: ' + str(i + 1), population[0].fitness)
 
@@ -375,6 +377,13 @@ def main(n_iteration, best_parents, n_children, mutation_probability):
     print('fitness of optimal tour: ', tsp_instance.trace_tours(opt.tours)[0])
     plot_tsp(opt.tours[0], "Optimal tour", tsp_instance.trace_tours(opt.tours)[0])
 
+    plt.plot(BESTFINESS)
+    plt.ylabel('Fitness')
+    plt.xlabel('Generation')
+    title = "Fitness over Time"
+    plt.title(title)
+    plt.show()
+
 
 if __name__ == "__main__":
     # immer mit den selben random Zahlen
@@ -383,5 +392,5 @@ if __name__ == "__main__":
     # more generations -> better fitness
     # main(10,3,4,0.2)
     # more best parents ->
-    ACTIV_PROBLEM_FILEPATH = berlin52_FILEPATH
-    main(500, 120, 600, 0.08)
+    ACTIV_PROBLEM_FILEPATH = a280_FILEPATH
+    main(100, 120, 600, 0.08)
